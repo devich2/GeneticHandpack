@@ -25,12 +25,8 @@ namespace DKR
                 new Item("Game", 2, 1),
                 new Item("Clock", 1, 2)
             });
-            Console.WriteLine("HEELO");
             GeneticSolver gs = new GeneticSolver(10, 15, items, gt);
-            Console.WriteLine("HEELO2");
             gs.Iterate(2);
-            Console.WriteLine("HEELO");
-            Console.ReadKey();
         }
     }
 }

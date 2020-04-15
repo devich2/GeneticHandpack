@@ -33,12 +33,12 @@ namespace DKR
                     if (backpack.Items.Contains(items[index]))
                         continue;
                     if (backpack.TotalWeight + items[i].Weight > maxWeight)
-                        continue;
+                        break;
                     backpack.Items.Add(items[index]);
                 }
-                population.Add(backpack);
+                if (population.Contains(backpack)) { }
+                else population.Add(backpack);
             }
-            Console.WriteLine("HER");
             return population;
         }
 
@@ -51,11 +51,16 @@ namespace DKR
         {
             int index = _rnd.Next(0, backpack.Items.Count() - 1);
             var bitPresentation = backpack.Presentation(items);
-            if(bitPresentation.ElementAt(index) == 0)
+            if (bitPresentation.ElementAt(index) == 0)
             {
+                Console.WriteLine($"Adding {items[index].Name}");
                 backpack.Items.Add(items[index]);
             }
-            else backpack.Items.Remove(items[index]);
+            else
+            {
+                Console.WriteLine($"Removing {items[index].Name}");
+                backpack.Items.Remove(items[index]);
+            }
 
             return backpack;
         }
@@ -66,7 +71,9 @@ namespace DKR
             int addIndex = 0;
             while(backpack.TotalWeight > maxWeight)
             {
-                backpack.Items.Remove(backpack.Items.Aggregate((x, y) => x.Price < y.Price ? x : y));
+                var minWorth = backpack.Items.Aggregate((x, y) => x.Price < y.Price ? x : y);
+                Console.WriteLine($"Removing {minWorth.Name}");
+                backpack.Items.Remove(minWorth);
             }
             return backpack;
         }

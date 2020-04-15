@@ -6,15 +6,15 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v3.1": {
-      "DKR/1.0.0": {
+      "Dkr/1.0.0": {
         "runtime": {
-          "DKR.dll": {}
+          "Dkr.dll": {}
         }
       }
     }
   },
   "libraries": {
-    "DKR/1.0.0": {
+    "Dkr/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
