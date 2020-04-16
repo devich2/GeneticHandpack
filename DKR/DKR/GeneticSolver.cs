@@ -9,9 +9,9 @@ namespace DKR
     public class GeneticSolver
     {
         private Random _rnd = new Random();
-        private List<Backpack> _population;
+        private List<Backpack> _population = new List<Backpack>();
 
-        private readonly double _mutPoss;
+        private double _mutPoss;
         private List<Item> _baseItems;
         private int _initialCount;
         private int _maxWeight;
@@ -24,7 +24,6 @@ namespace DKR
             _baseItems = items;
             _genetic = genetic;
             _mutPoss = _rnd.NextDouble();
-            _population = new List<Backpack>();
         }
 
         public bool isValid(Backpack pack) => pack.TotalWeight <= _maxWeight;
@@ -48,44 +47,48 @@ namespace DKR
 
         private string itemsPresentation() => string.Join("\t", _baseItems.Select(x=>x.Name));
 
-        private void printPack(Backpack pack)
+        private void printPack(string info, Backpack pack)
         {
-           Console.WriteLine($"{itemsPresentation()} \n{string.Join("\t  ", pack.Presentation(_baseItems))}");
+            Console.WriteLine(info + $"{itemsPresentation()} \n" +
+                $"{string.Join("\t  ", pack.Presentation(_baseItems))}" + $"\t TotalWeight - {pack.TotalWeight}, " + $"TotalWorth - {pack.TotalWorth}");
         }
 
-        private void printPackList(List<Backpack> packList)
+        private void printPackList(string info, List<Backpack> packList)
         {
-            Console.WriteLine($"\n {itemsPresentation()} \n{string.Join("\n", packList.Select(x => string.Join("\t   ", x.Presentation(_baseItems))))}");
+            Console.WriteLine(info + $"\n {itemsPresentation()} \n" +
+                $"{string.Join("\n", packList.Select(x => string.Join("\t   ", x.Presentation(_baseItems)) + $"\t TotalWeight - {x.TotalWeight}, " + $"TotalWorth - {x.TotalWorth}"))}");
         }
 
+        private string itemsFullPresentation => string.Join("\n", _baseItems);
         public void Iterate(int itrCount)
         {
+            Console.WriteLine("Base items -\n" + itemsFullPresentation);
 
             _population = _genetic.CreatePopulation(_initialCount, _maxWeight, _baseItems).ToList();
 
-            Console.WriteLine($"\nInitial population: ");
-            printPackList(_population);
-
-
             for (int i = 0; i < itrCount; i++)
             {
-                Console.WriteLine($"-----------------------------------------\nIteration #{i + 1}");
+                Console.WriteLine($"-----------------------------------------\nIteration #{i + 1}----------------------------------------------------");
+                printPackList($"\nPopulation: ", _population);
+
                 var parents = _genetic.ChooseParents(_population).ToList();
 
-                Console.WriteLine($"\nChosen parents: ");
-                printPackList(parents);
+                printPackList($"\nChosen parents for selection: ", parents);
 
+                Console.WriteLine("\n-----------------------SELECTION------------------------------------");
                 var descendants = _genetic.Selection(parents, _baseItems).ToList();
+                printPackList($"Descendants - \n", descendants);
+                Console.WriteLine("------------------------------------------------------\n");
               
                 Console.WriteLine($"\nMutation possibility - {_mutPoss}");
                 int num = 0;
 
                 foreach(var des in descendants)
                 {
-                    Console.WriteLine($"----------------------\nDescendant #{++num}\n");
-                    printPack(des);
+                    printPack($"----------------------\nDescendant #{++num}\n", des);
                    
                     double poss = _rnd.NextDouble();
+
                     Console.WriteLine($"Generated random poss for mutation - {poss} > {_mutPoss}: {poss > _mutPoss}");
 
                     if (isMutable(poss))
@@ -93,28 +96,27 @@ namespace DKR
                         Console.WriteLine("Mutating...........");
                         _genetic.Mutate(des, _baseItems);
 
-                        Console.WriteLine($"-----------------------\nDescendant after mutation\n");
-                        printPack(des);
-
+                        printPack($"-----------------------\nDescendant after mutation\n", des);
                     }
 
                     if (!isValid(des))
                     {
-                        Console.WriteLine($"------------------\nNeeds reanimation(Weight - {des.TotalWeight})");
+                        Console.WriteLine($"------------------\nNeeds reanimation(TotalWeight - {des.TotalWeight})");
                         _genetic.Reanimate(_maxWeight, des, _baseItems);
 
-                        Console.WriteLine($"-----------------------\nDescendant after reanimation\n");
-                        printPack(des);
-
+                        printPack($"-----------------------\nDescendant after reanimation\n", des);
                     }
                     Console.WriteLine();
                 }
+
                 int imprvIndex = _rnd.Next(0, descendants.Count());
                 Console.WriteLine($"------------------------------------\nImproving descendant# {imprvIndex + 1}");
 
                 _genetic.Improve(_maxWeight, descendants[imprvIndex], _baseItems);
-                List<int> replacedIndexes = new List<int>();
+                printPack($"------------------------------------\nDescendant #{imprvIndex + 1} after local improvement\n", descendants[imprvIndex]);
+
                 Console.WriteLine("----------------------------Updating population-----------------------------");
+                List<int> replacedIndexes = new List<int>();
                 num = 0;
 
                 foreach(var des in descendants)
@@ -123,18 +125,12 @@ namespace DKR
                     if(!_population.Contains(des))
                     {
                         var replaceableIndex = getMinWorthIndex(replacedIndexes);
-                        Console.WriteLine($"{itemsPresentation()}\nReplaceable person #{replaceableIndex} - \n");
-                        printPack(_population[replaceableIndex]);
-
-                        Console.WriteLine($"New person - \n");
-                        printPack(des);
+                        printPack($"Replaceable person #{replaceableIndex + 1} - \n", _population[replaceableIndex]);
+                        printPack($"New person - \n", des);
 
                         _population[replaceableIndex] = des;
                         replacedIndexes.Add(replaceableIndex);
-
-                        Console.WriteLine("-------------------------------------------------------\n");
-                        Console.WriteLine($"\nPopulation after replacement #{num}: ");
-                        printPackList(_population);
+                        printPackList($"-------------------------------------------------------\n\nPopulation after replacement #{num}: ", _population);
                     }
                     else
                     {
@@ -144,6 +140,7 @@ namespace DKR
                     Console.WriteLine("-------------------------------------------------------\n");
                 }
             }
+            printPack("--------------\nBest solution - \n", _population.Aggregate((x, y) => x.TotalWorth >= y.TotalWorth ? x : y));
         }
     }
 }

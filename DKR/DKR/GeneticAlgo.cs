@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -27,16 +28,16 @@ namespace DKR
             for(int i = 0; i < count; i++)
             {
                 var backpack = new Backpack();
-                while( backpack.TotalWorth < maxWeight)
+                while(backpack.TotalWeight < maxWeight)
                 {
                     int index = _rnd.Next(0, items.Count - 1);
                     if (backpack.Items.Contains(items[index]))
                         continue;
-                    if (backpack.TotalWeight + items[i].Weight > maxWeight)
+                    if (backpack.TotalWeight + items[index].Weight > maxWeight)
                         break;
                     backpack.Items.Add(items[index]);
                 }
-                if (population.Contains(backpack)) { }
+                if (population.Contains(backpack)) { count++; }
                 else population.Add(backpack);
             }
             return population;
@@ -44,6 +45,29 @@ namespace DKR
 
         public Backpack Improve(int maxWeight, Backpack backpack, List<Item> items)
         {
+            var allowedItems = items.Except(backpack.Items);
+            if (allowedItems.Count() == 0)
+            {
+                Console.WriteLine("Allready all items in backpack!.....");
+            }
+            else
+            {
+                var sorted = allowedItems.OrderByDescending(x => x.Price);
+                bool improved = false;
+                foreach(var item in sorted)
+                {
+                    if(item.Weight + backpack.TotalWeight <= maxWeight)
+                    {
+                        backpack.Items.Add(item);
+                        Console.WriteLine($"Added {item.Name} with worth - {item.Price}, weight - {item.Weight}");
+                        Console.WriteLine($"TotalWeight - {backpack.TotalWeight}, TotalWorth - {backpack.TotalWorth}");
+                        Console.WriteLine("------------");
+                        improved = true;
+                    }
+                }
+                if (!improved) Console.WriteLine("----No improvement!----");
+
+            }
             return backpack;
         }
 
@@ -68,12 +92,49 @@ namespace DKR
         public Backpack Reanimate(int maxWeight, Backpack backpack, List<Item> items)
         {
             var sorted = items.OrderBy(x => x.Weight);
-            int addIndex = 0;
+            List<Item> usedItems = new List<Item>();
+            int addIndex, removeIndex;
             while(backpack.TotalWeight > maxWeight)
             {
-                var minWorth = backpack.Items.Aggregate((x, y) => x.Price < y.Price ? x : y);
-                Console.WriteLine($"Removing {minWorth.Name}");
-                backpack.Items.Remove(minWorth);
+                addIndex = 0;
+                removeIndex = 0;
+                var bpSorted = backpack.Items.OrderBy(x => x.Price);
+
+                while(removeIndex < items.Count && usedItems.Contains(bpSorted.ElementAt(removeIndex)) && backpack.Items.Contains(bpSorted.ElementAt(removeIndex)))
+                {
+                    removeIndex++;
+                }
+                if(removeIndex != items.Count)
+                {
+                    var minWorth = bpSorted.ElementAt(removeIndex);
+                    Console.WriteLine($"Removing {minWorth.Name} with worth - {minWorth.Price}, weight - {minWorth.Weight}");
+                    backpack.Items.Remove(minWorth);
+                    usedItems.Add(minWorth);
+                }
+                else
+                {
+                    Console.WriteLine("Cant reanimate...");
+                    break;
+                }
+               
+                while(addIndex < items.Count && usedItems.Contains(sorted.ElementAt(addIndex)) && backpack.Items.Contains(sorted.ElementAt(addIndex)))
+                {
+                    addIndex++;
+                }
+                if (addIndex != items.Count)
+                {
+                    var minWeight = sorted.ElementAt(addIndex);
+                    Console.WriteLine($"Adding {minWeight.Name} with worth - {minWeight.Price}, " +
+                        $"weight - {minWeight.Weight}");
+                    backpack.Items.Add(minWeight);
+                    usedItems.Add(minWeight);
+                }
+                else
+                {
+                    Console.WriteLine("Difficult case, no adding, just continue removing items");
+                }
+                Console.WriteLine($"TotalWeight - {backpack.TotalWeight}, TotalWorth - {backpack.TotalWorth}");
+                Console.WriteLine("------------");
             }
             return backpack;
         }
@@ -81,6 +142,7 @@ namespace DKR
         public IEnumerable<Backpack> Selection(IEnumerable<Backpack> backpacks, List<Item> items)
         {
             int rnd = _rnd.Next(0, items.Count());
+            Console.WriteLine($"---Random point for selection - {rnd + 1}");
             List<Backpack> descendants = new List<Backpack>();
             List<List<int>> bitPresents = new List<List<int>>(backpacks.Select(x => x.Presentation(items).ToList()));
             var lastBp = bitPresents.Last();

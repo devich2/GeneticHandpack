@@ -19,5 +19,10 @@ namespace DKR
         }
 
         public bool Equals(Item other) => (other.Name == Name);
+
+        public override string ToString()
+        {
+            return $"{Name}, worth - {Price}, weight - {Weight}";
+        }
     }
 }

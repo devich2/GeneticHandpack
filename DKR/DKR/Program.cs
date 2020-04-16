@@ -7,10 +7,8 @@ namespace DKR
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("HEELO");
             GeneticAlgo gt = new GeneticAlgo();
             List<Item> items = new List<Item>();
-            Console.WriteLine("HEELO");
             items.AddRange(new Item[]
             {
                 new Item("Bag", 4, 2),
